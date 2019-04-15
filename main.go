@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -10,6 +11,12 @@ import (
 	sway "github.com/joshuarubin/go-sway"
 	"github.com/joshuarubin/lifecycle"
 )
+
+var socketPath string
+
+func init() {
+	flag.StringVar(&socketPath, "socketpath", "", "Use the specified socket path")
+}
 
 func main() {
 	if err := run(); err != nil && !isSignal(err) {
@@ -33,7 +40,9 @@ func isSignal(err error, sigs ...os.Signal) bool {
 func run() error {
 	ctx := lifecycle.New(context.Background())
 
-	client, err := sway.New(ctx)
+	flag.Parse()
+
+	client, err := sway.New(ctx, sway.WithSocketPath(socketPath))
 	if err != nil {
 		return err
 	}
