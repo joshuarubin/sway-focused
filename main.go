@@ -85,7 +85,18 @@ func processFocus(ctx context.Context, client sway.Client, node *sway.Node) {
 	}
 
 	opt := "''"
-	if node.AppID == nil || *node.AppID != "kitty" {
+
+	var isKitty bool
+
+	if node.AppID != nil && *node.AppID == "kitty" {
+		isKitty = true
+	}
+
+	if node.WindowProperties != nil && node.WindowProperties.Class == "kitty" {
+		isKitty = true
+	}
+
+	if !isKitty {
 		opt = "altwin:ctrl_win"
 	}
 
