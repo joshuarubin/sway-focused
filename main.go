@@ -52,15 +52,15 @@ func run() error {
 		return err
 	}
 
-	processFocus(ctx, client, n.FocusedNode())
-
 	h := handler{
 		EventHandler: sway.NoOpEventHandler(),
 		client:       client,
 	}
 
+	h.processFocus(ctx, client, n.FocusedNode())
+
 	lifecycle.GoErr(ctx, func() error {
-		return sway.Subscribe(ctx, h, sway.EventTypeWindow)
+		return sway.Subscribe(ctx, &h, sway.EventTypeWindow)
 	})
 
 	return lifecycle.Wait(ctx)
@@ -68,35 +68,42 @@ func run() error {
 
 type handler struct {
 	sway.EventHandler
-	client sway.Client
+	client     sway.Client
+	isTerminal bool
 }
 
-func (h handler) Window(ctx context.Context, e sway.WindowEvent) {
+func (h *handler) Window(ctx context.Context, e sway.WindowEvent) {
 	if e.Change != "focus" {
 		return
 	}
 
-	processFocus(ctx, h.client, e.Container.FocusedNode())
+	h.processFocus(ctx, h.client, e.Container.FocusedNode())
 }
 
-func processFocus(ctx context.Context, client sway.Client, node *sway.Node) {
+func (h *handler) processFocus(ctx context.Context, client sway.Client, node *sway.Node) {
 	if node == nil {
 		return
 	}
 
 	opt := "''"
 
-	var isKitty bool
+	var isTerminal bool
 
 	if node.AppID != nil && *node.AppID == "kitty" {
-		isKitty = true
+		isTerminal = true
 	}
 
 	if node.WindowProperties != nil && node.WindowProperties.Class == "kitty" {
-		isKitty = true
+		isTerminal = true
 	}
 
-	if !isKitty {
+	if isTerminal == h.isTerminal {
+		return
+	}
+
+	h.isTerminal = isTerminal
+
+	if !isTerminal {
 		opt = "altwin:ctrl_win"
 	}
 
