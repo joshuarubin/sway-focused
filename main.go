@@ -85,6 +85,12 @@ func (h *handler) processFocus(ctx context.Context, client sway.Client, node *sw
 		return
 	}
 
+	if node.WindowProperties != nil && node.WindowProperties.Class == "albert" {
+		// don't ever change map for albert, if this isn't here, albert
+		// disappears when activating while kitty is focused
+		return
+	}
+
 	opt := "''"
 
 	var isTerminal bool
